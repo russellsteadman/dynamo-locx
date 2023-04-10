@@ -23,9 +23,12 @@ First you'll need to import the AWS sdk and set up your DynamoDB connection:
 ```js
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 const ddb = new DynamoDBClient({
-  endpoint: "http://localhost:8000", // For local development
+  endpoint: "http://localhost:8000", // For local development only
+  region: "us-east-1",
 });
 ```
+
+To test locally, you can run `docker run -p 8000:8000 deangiberson/aws-dynamodb-local` to spin up a local docker instance exposed on port 8000.
 
 Next you must create an instance of `GeoDataManagerConfiguration` for each geospatial table you wish to interact with. This is a container for various options (see API below), but you must always provide a `DynamoDB` instance and a table name.
 
