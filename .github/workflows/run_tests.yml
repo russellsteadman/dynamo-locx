@@ -23,6 +23,9 @@ jobs:
       - run: npm ci
       - run: npm run build
       - run: npm test
+        env:
+          AWS_ACCESS_KEY_ID: dummy
+          AWS_SECRET_ACCESS_KEY: dummy
 
     services:
       ddblocal:
