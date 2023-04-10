@@ -11,7 +11,6 @@ import data from "../../example/capitals.json";
 // Use a local DB for the example.
 const ddb = new DynamoDBClient({
   endpoint: "http://127.0.0.1:8000",
-  region: "us-east-1",
 });
 
 // Configuration for a new instance of a GeoDataManager. Each GeoDataManager instance represents a table
@@ -20,7 +19,7 @@ const config = new ddbGeo.GeoDataManagerConfiguration(ddb, "test-capitals");
 // Instantiate the table manager
 const capitalsManager = new ddbGeo.GeoDataManager(config);
 
-ava.beforeEach(async function () {
+ava.beforeEach(async () => {
   config.hashKeyLength = 3;
   config.consistentRead = true;
 
@@ -33,7 +32,7 @@ ava.beforeEach(async function () {
   await ddb.send(new CreateTableCommand(createTableInput));
   // Wait for it to become ready
   await waitUntilTableExists(
-    { client: ddb, maxWaitTime: 10000 },
+    { client: ddb, maxWaitTime: 30 },
     { TableName: config.tableName }
   );
 
@@ -59,12 +58,9 @@ ava.beforeEach(async function () {
   const WAIT_BETWEEN_BATCHES_MS = 1000;
   let currentBatch = 1;
 
-  async function resumeWriting() {
-    if (putPointInputs.length === 0) {
-      console.log("Finished loading");
-      return;
-    }
+  while (putPointInputs.length > 0) {
     const thisBatch: typeof putPointInputs[0][] = [];
+
     for (let i = 0; i < BATCH_SIZE; i++) {
       const itemToAdd = putPointInputs.shift();
       if (!itemToAdd) {
@@ -72,20 +68,19 @@ ava.beforeEach(async function () {
       }
       thisBatch.push(itemToAdd);
     }
+
     console.log(
       "Writing batch " +
         currentBatch++ +
         "/" +
         Math.ceil(data.length / BATCH_SIZE)
     );
+
     await capitalsManager.batchWritePoints(thisBatch);
-    // Sleep
     await new Promise((resolve) =>
-      setInterval(resolve, WAIT_BETWEEN_BATCHES_MS)
+      setTimeout(resolve, WAIT_BETWEEN_BATCHES_MS)
     );
-    return resumeWriting();
   }
-  return resumeWriting();
 });
 
 ava("queryRadius", async (t) => {

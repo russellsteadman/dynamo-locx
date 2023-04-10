@@ -22,7 +22,7 @@ jobs:
           node-version: ${{ matrix.node-version }}
       - run: npm ci
       - run: npm run build
-      - run: npm test -- --no-worker-threads
+      - run: npm test
 
     services:
       ddblocal:
