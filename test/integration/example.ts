@@ -6,6 +6,7 @@ import {
   DynamoDBClient,
   waitUntilTableExists,
 } from "@aws-sdk/client-dynamodb";
+import data from "../../example/capitals.json";
 
 // Use a local DB for the example.
 const ddb = new DynamoDBClient({
@@ -20,7 +21,6 @@ const config = new ddbGeo.GeoDataManagerConfiguration(ddb, "test-capitals");
 const capitalsManager = new ddbGeo.GeoDataManager(config);
 
 ava.beforeEach(async function () {
-  this.timeout(20000);
   config.hashKeyLength = 3;
   config.consistentRead = true;
 
@@ -38,9 +38,7 @@ ava.beforeEach(async function () {
   );
 
   // Load sample data in batches
-
   console.log("Loading sample data from capitals.json");
-  const data = require("../../example/capitals.json");
   const putPointInputs = data.map(function (capital, i) {
     return {
       RangeKeyValue: { S: String(i) }, // Use this to ensure uniqueness of the hash/range pairs.
@@ -66,12 +64,12 @@ ava.beforeEach(async function () {
       console.log("Finished loading");
       return;
     }
-    const thisBatch = [];
-    for (
-      var i = 0, itemToAdd = null;
-      i < BATCH_SIZE && (itemToAdd = putPointInputs.shift());
-      i++
-    ) {
+    const thisBatch: typeof putPointInputs[0][] = [];
+    for (let i = 0; i < BATCH_SIZE; i++) {
+      const itemToAdd = putPointInputs.shift();
+      if (!itemToAdd) {
+        break;
+      }
       thisBatch.push(itemToAdd);
     }
     console.log(
