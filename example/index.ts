@@ -10,6 +10,7 @@ import { v4 as uuid } from "uuid";
 // Use a local DB for the example.
 const ddb = new DynamoDBClient({
   endpoint: "http://localhost:8000",
+  region: "us-east-1",
 });
 
 // Configuration for a new instance of a GeoDataManager. Each GeoDataManager instance represents a table

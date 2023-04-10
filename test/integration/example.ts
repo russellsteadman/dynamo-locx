@@ -11,6 +11,7 @@ import data from "../../example/capitals.json";
 // Use a local DB for the example.
 const ddb = new DynamoDBClient({
   endpoint: "http://127.0.0.1:8000",
+  region: "us-east-1",
 });
 
 // Configuration for a new instance of a GeoDataManager. Each GeoDataManager instance represents a table
