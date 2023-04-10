@@ -1,6 +1,6 @@
 # Geo Library for Amazon DynamoDB
 
-This project is an unofficial port of [awslabs/dynamo-locx][dynamo-locx], bringing creation and querying of geospatial data to Node JS developers using [Amazon DynamoDB][dynamodb].
+This project is an unofficial port of [awslabs/dynamodb-geo][dynamodb-geo] (based on the [original](https://github.com/robhogan/dynamodb-geo.js) by Rob Hogan), bringing creation and querying of geospatial data to Node JS developers using [Amazon DynamoDB][dynamodb].
 
 ## Features
 
@@ -302,7 +302,6 @@ Because all paginated `Query` results are loaded into memory and processed, it m
 The Geohash used in this library is roughly centimeter precision. Therefore, the library is not suitable if your dataset has much higher density.
 
 [npm]: https://www.npmjs.com
-[yarn]: https://yarnpkg.com
 [updateitem]: http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_UpdateItem.html
 [deleteitem]: http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_DeleteItem.html
 [putitem]: http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_PutItem.html
@@ -310,11 +309,11 @@ The Geohash used in this library is roughly centimeter precision. Therefore, the
 [hashrange]: http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.CoreComponents.html#HowItWorks.CoreComponents.PrimaryKey
 [readconsistency]: http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.ReadConsistency.html
 [geojson]: https://geojson.org/geojson-spec.html
-[example]: https://github.com/rh389/dynamodb-geo.js/tree/master/example
+[example]: https://github.com/russellsteadman/dynamo-locx/tree/master/example
 [dynamodb-geo]: https://github.com/awslabs/dynamodb-geo
 [dynamodb]: http://aws.amazon.com/dynamodb
 [dynamodb-query]: http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Query.html
-[hashkeylength-tests]: https://github.com/rh389/dynamodb-geo.js/blob/master/test/integration/hashKeyLength.ts
+[hashkeylength-tests]: https://github.com/russellsteadman/dynamo-locx/blob/master/test/integration/hashKeyLength.ts
 [choosing-hashkeylength]: #choosing-a-hashkeylength-optimising-for-performance-and-cost
 
 ## License
