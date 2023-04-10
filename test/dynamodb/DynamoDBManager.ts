@@ -1,7 +1,11 @@
 import { DynamoDBManager } from "../../src/dynamodb/DynamoDBManager";
 import { GeoDataManagerConfiguration } from "../../src";
 import ava from "ava";
-import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
+import {
+  DeleteItemCommand,
+  DynamoDBClient,
+  PutItemCommand,
+} from "@aws-sdk/client-dynamodb";
 
 ava(
   "DynamoDBManager.deletePoint calls deleteItem with the correct arguments ",
@@ -9,9 +13,9 @@ ava(
     let called = false;
     const config = new GeoDataManagerConfiguration(
       {
-        deleteItem: (args: any) => {
+        send: (args: DeleteItemCommand) => {
           called = true;
-          t.deepEqual(args, {
+          t.deepEqual(args.input, {
             TableName: "MyTable",
             Key: {
               hashKey: { N: "44" },
@@ -43,9 +47,9 @@ ava(
     let called = false;
     const config = new GeoDataManagerConfiguration(
       {
-        putItem: (args: any) => {
+        send: (args: PutItemCommand) => {
           called = true;
-          t.deepEqual(args, {
+          t.deepEqual(args.input, {
             TableName: "MyTable",
             Item: {
               geoJson: { S: '{"type":"Point","coordinates":[-0.13,51.51]}' },

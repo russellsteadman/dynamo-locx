@@ -15,7 +15,7 @@
   "license": "Apache-2.0",
   "dependencies": {
     "long": "^5.2.1",
-    "nodes2ts": "^3.0.0"
+    "nodes2ts": "^2.0.0"
   },
   "devDependencies": {
     "@aws-sdk/client-dynamodb": "^3.309.0",
@@ -34,6 +34,7 @@
     ],
     "require": [
       "ts-node/register"
-    ]
+    ],
+    "timeout": "600s"
   }
 }
