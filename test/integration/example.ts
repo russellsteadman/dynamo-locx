@@ -26,7 +26,10 @@ ava.beforeEach(async function () {
 
   // Use GeoTableUtil to help construct a CreateTableInput.
   const createTableInput = ddbGeo.GeoTableUtil.getCreateTableRequest(config);
-  // createTableInput.ProvisionedThroughput.ReadCapacityUnits = 2;
+  if (createTableInput.ProvisionedThroughput) {
+    createTableInput.ProvisionedThroughput.ReadCapacityUnits = 2;
+  }
+
   await ddb.send(new CreateTableCommand(createTableInput));
   // Wait for it to become ready
   await waitUntilTableExists(
