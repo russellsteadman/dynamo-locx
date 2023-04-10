@@ -23,6 +23,8 @@ jobs:
       - run: npm ci
       - run: npm run build
       - run: npm test
+        env:
+          NODE_OPTIONS: "--max_old_space_size=4096"
 
     services:
       ddblocal:
