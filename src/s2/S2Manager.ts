@@ -15,7 +15,7 @@
 
 import { S2Cell, S2LatLng } from "nodes2ts";
 import { GeoPoint } from "../types";
-import * as Long from "long";
+import type Long from "long";
 
 export class S2Manager {
   static generateGeohash(geoPoint: GeoPoint) {
