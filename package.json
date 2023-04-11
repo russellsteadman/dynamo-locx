@@ -1,7 +1,7 @@
 {
   "name": "dynamo-locx",
   "version": "0.1.0",
-  "description": "A javascript port of awslabs/dynamodb-geo, for dynamodb geospatial querying",
+  "description": "Simple geospatial querying for Amazon DynamoDB",
   "scripts": {
     "prepublish": "tsc",
     "clean": "rimraf dist",
@@ -13,6 +13,18 @@
   "author": "Russell Steadman <code@steadman.email> (https://www.russellsteadman.com/)",
   "repository": "https://github.com/russellsteadman/dynamo-locx.git",
   "license": "Apache-2.0",
+  "keywords": [
+    "dynamodb",
+    "geospatial",
+    "geo",
+    "location",
+    "geoquery",
+    "aws",
+    "geohash",
+    "geodata",
+    "geojson",
+    "geolocation"
+  ],
   "dependencies": {
     "long": "^5.2.1",
     "nodes2ts": "^2.0.0"
