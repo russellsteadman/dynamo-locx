@@ -53,13 +53,13 @@ Optimally, you should pick the largest `hashKeyLength` your usage scenario allow
 
 ## Creating a GeoTable
 
-`GeoTable` has method `getCreateTableRequest` for to create a [DynamoDB CreateTable request][createtable] request given your configuration. This request can be edited as desired before being sent to DynamoDB.
+`GeoTable` has method `getCreateTableRequest` for to create a [DynamoDB CreateTable request][createtable] request given your configuration. This request can be edited as desired before being sent to DynamoDB. Alternatively, you can create a table using other methods as long as it has the correct schema and indexing. See the [table setup](#table-setup) for details.
 
 ```js
-const createTableInput = locx.getCreateTableRequest();
-
-// Tweak the CreateTableCommandInput as needed
-createTableInput.ProvisionedThroughput = { ReadCapacityUnits: 2 };
+const createTableInput = locx.getCreateTableRequest({
+  BillingMode: "PAY_PER_REQUEST",
+  // Configure any CreateTableCommandInput options here
+});
 
 // Create the table
 ddb
@@ -259,6 +259,21 @@ The name of the attribute which will contain the longitude/latitude pair in a Ge
 #### geohashIndexName: string = "geohash-index"
 
 The name of the index to be created against the geohash. Only used for creating new tables.
+
+## Table Setup
+
+The library requires a table with a [hash/range primary key pair][hashrange]. The hash key is a number, and the range key is a string. The hash key is specified by the `hashKeyAttributeName` configuration option, and the range key is specified by the `rangeKeyAttributeName` configuration option.
+
+The library also requires a [local secondary index][lsi] with the same hash key and a different range key. This index range key is a number, and it is specified by the `geohashAttributeName` configuration option. The name of the index is specified by the `geohashIndexName` configuration option. This index must project at least the hash key, range key, geohash, and GeoJSON attributes.
+
+### Summary of table setup
+
+- Primary hash key: `hashKeyAttributeName`, default `hashKey` (number)
+- Primary range key: `rangeKeyAttributeName`, default `rangeKey` (string)
+- Local secondary index hash key: same as primary hash key
+- Local secondary index range key: `geohashAttributeName`, default `geohash` (number)
+- Local secondary index name: `geohashIndexName`, default `geohash-index`
+- Local secondary index projection: `ALL` (or at least `hashKeyAttributeName`, `rangeKeyAttributeName`, `geohashAttributeName`, and `geoJsonAttributeName`)
 
 ## Example
 

@@ -411,13 +411,12 @@ class GeoTable {
    * Construct a create table request object based on GeoDataManagerConfiguration. The users can update any aspect of
    * the request and call it.
    */
-  public getCreateTableRequest(): CreateTableCommandInput {
+  public getCreateTableRequest(
+    createTableInput?: Omit<CreateTableCommandInput, "TableName" | "KeySchema">
+  ): CreateTableCommandInput {
     return {
+      ...createTableInput,
       TableName: this.tableName,
-      ProvisionedThroughput: {
-        ReadCapacityUnits: 10,
-        WriteCapacityUnits: 5,
-      },
       KeySchema: [
         {
           KeyType: "HASH",
@@ -429,11 +428,13 @@ class GeoTable {
         },
       ],
       AttributeDefinitions: [
+        ...(createTableInput?.AttributeDefinitions ?? []),
         { AttributeName: this.hashKeyAttributeName, AttributeType: "N" },
         { AttributeName: this.rangeKeyAttributeName, AttributeType: "S" },
         { AttributeName: this.geohashAttributeName, AttributeType: "N" },
       ],
       LocalSecondaryIndexes: [
+        ...(createTableInput?.LocalSecondaryIndexes ?? []),
         {
           IndexName: this.geohashIndexName,
           KeySchema: [
