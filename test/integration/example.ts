@@ -24,10 +24,13 @@ const locx = new GeoTable({
 
 ava.beforeEach(async () => {
   // Use GeoTableUtil to help construct a CreateTableInput.
-  const createTableInput = locx.getCreateTableRequest();
-  if (createTableInput.ProvisionedThroughput) {
-    createTableInput.ProvisionedThroughput.ReadCapacityUnits = 2;
-  }
+  const createTableInput = locx.getCreateTableRequest({
+    BillingMode: "PROVISIONED",
+    ProvisionedThroughput: {
+      ReadCapacityUnits: 5,
+      WriteCapacityUnits: 5,
+    },
+  });
 
   await ddb.send(new CreateTableCommand(createTableInput));
   // Wait for it to become ready

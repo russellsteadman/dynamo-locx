@@ -20,7 +20,13 @@ const locx = new GeoTable({
 });
 
 // Construct a CreateTableCommandInput.
-const createTableInput = locx.getCreateTableRequest();
+const createTableInput = locx.getCreateTableRequest({
+  BillingMode: "PROVISIONED",
+  ProvisionedThroughput: {
+    ReadCapacityUnits: 5,
+    WriteCapacityUnits: 5,
+  },
+});
 
 console.log("Creating table with schema:");
 console.dir(createTableInput, { depth: null });

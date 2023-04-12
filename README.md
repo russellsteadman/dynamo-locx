@@ -57,7 +57,11 @@ Optimally, you should pick the largest `hashKeyLength` your usage scenario allow
 
 ```js
 const createTableInput = locx.getCreateTableRequest({
-  BillingMode: "PAY_PER_REQUEST",
+  BillingMode: "PROVISIONED",
+  ProvisionedThroughput: {
+    ReadCapacityUnits: 5,
+    WriteCapacityUnits: 5,
+  },
   // Configure any CreateTableCommandInput options here
 });
 

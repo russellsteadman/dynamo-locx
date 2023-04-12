@@ -43,6 +43,8 @@ import {
   latLngRectFromQueryRectangleInput,
 } from "./s2/S2Util";
 
+type PartialBy<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
+
 class GeoTable {
   protected client: DynamoDBClient;
   readonly tableName: string;
@@ -412,7 +414,10 @@ class GeoTable {
    * the request and call it.
    */
   public getCreateTableRequest(
-    createTableInput?: Omit<CreateTableCommandInput, "TableName" | "KeySchema">
+    createTableInput?: PartialBy<
+      Omit<CreateTableCommandInput, "TableName" | "KeySchema">,
+      "AttributeDefinitions"
+    >
   ): CreateTableCommandInput {
     return {
       ...createTableInput,
