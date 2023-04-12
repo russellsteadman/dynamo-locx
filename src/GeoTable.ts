@@ -255,16 +255,13 @@ class GeoTable {
     const updateItemInput: UpdateItemCommandInput = {
       ...updatePointInput.UpdateItemCommandInput,
       TableName: this.tableName,
+      Key: {},
     };
 
-    if (!updateItemInput.Key) {
-      updateItemInput.Key = {};
-    }
-
-    updateItemInput.Key[this.hashKeyAttributeName] = {
+    updateItemInput.Key![this.hashKeyAttributeName] = {
       N: hashKey.toString(10),
     };
-    updateItemInput.Key[this.rangeKeyAttributeName] =
+    updateItemInput.Key![this.rangeKeyAttributeName] =
       updatePointInput.RangeKeyValue;
 
     // Geohash and geoJson cannot be updated.

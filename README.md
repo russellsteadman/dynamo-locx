@@ -51,11 +51,9 @@ From the [AWS `Query` documentation][dynamodb-query]:
 
 Optimally, you should pick the largest `hashKeyLength` your usage scenario allows. The wider your typical radius/box queries, the smaller it will need to be. Changing your `hashKeyLength` would require you to recreate your table.
 
-## Creating a table
+## Creating a GeoTable
 
 `GeoTable` has method `getCreateTableRequest` for to create a [DynamoDB CreateTable request][createtable] request given your configuration. This request can be edited as desired before being sent to DynamoDB.
-
-Example:
 
 ```js
 const createTableInput = locx.getCreateTableRequest();
@@ -78,7 +76,7 @@ ddb
   });
 ```
 
-## Adding data
+## Adding a GeoPoint
 
 ```js
 locx
@@ -107,11 +105,11 @@ locx
 
 See also [DynamoDB PutItem request][putitem]
 
-## Updating a specific point
+## Updating a GeoPoint
 
-Note that you cannot update the hash key, range key, geohash or geoJson. If you want to change these, you'll need to recreate the record.
+The hash key, range key, geohash and geoJson cannot be updated. To change these, recreate the record.
 
-You must specify a `RangeKeyValue`, a `GeoPoint`, and an `UpdateItemInput` matching the [DynamoDB UpdateItem][updateitem] request (`TableName` and `Key` are filled in for you).
+You must specify a `RangeKeyValue`, a `GeoPoint`, and an `UpdateItemCommandInput` matching the [DynamoDB UpdateItem][updateitem] request (`TableName` and `Key` are filled in for you).
 
 ```js
 locx
@@ -135,7 +133,7 @@ locx
   });
 ```
 
-## Deleting a specific point
+## Deleting a GeoPoint
 
 You must specify a `RangeKeyValue` and a `GeoPoint`. Optionally, you can pass `DeleteItemInput` matching [DynamoDB DeleteItem][deleteitem] request (`TableName` and `Key` are filled in for you).
 
@@ -204,8 +202,6 @@ locx
 TODO: Docs (see [the example][example] for an example of a batch write)
 
 ## Configuration reference
-
-These are public properties of a `GeoDataManagerConfiguration` instance. After creating the config object you may modify these properties.
 
 #### client: DynamoDBClient
 

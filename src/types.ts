@@ -79,6 +79,9 @@ export interface QueryRectangleOutput extends GeoQueryOutput {}
 export interface UpdatePointInput {
   RangeKeyValue: AttributeValue;
   GeoPoint: GeoPoint;
-  UpdateItemCommandInput: Omit<UpdateItemCommandInput, "TableName">;
+  UpdateItemCommandInput: Omit<
+    Omit<UpdateItemCommandInput, "TableName">,
+    "Key"
+  >;
 }
 export interface UpdatePointOutput extends UpdateItemCommandOutput {}
