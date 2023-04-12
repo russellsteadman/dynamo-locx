@@ -1,10 +1,10 @@
-import { S2Manager } from "../../src/s2/S2Manager";
 import Long from "long";
 import ava from "ava";
+import { generateGeohash, generateHashKey } from "../../src/s2/S2Manager";
 
 ava("generateGeoHash", (t) => {
   t.is(
-    S2Manager.generateGeohash({
+    generateGeohash({
       latitude: 52.1,
       longitude: 2,
     }).toString(10),
@@ -14,7 +14,7 @@ ava("generateGeoHash", (t) => {
 
 ava("generateHashKey", (t) => {
   t.is(
-    S2Manager.generateHashKey(
+    generateHashKey(
       Long.fromString("5177531549489041509", false, 10),
       6
     ).toNumber(),

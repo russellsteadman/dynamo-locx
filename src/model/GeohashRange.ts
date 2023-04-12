@@ -1,6 +1,7 @@
-import { GeoDataManagerConfiguration } from "../GeoDataManagerConfiguration";
-import { S2Manager } from "../s2/S2Manager";
 import Long from "long";
+import { generateHashKey } from "../s2/S2Manager";
+
+const MERGE_THRESHOLD = 2;
 
 export class GeohashRange {
   rangeMin: Long;
@@ -13,9 +14,7 @@ export class GeohashRange {
 
   public tryMerge(range: GeohashRange): boolean {
     if (
-      range.rangeMin
-        .subtract(this.rangeMax)
-        .lessThanOrEqual(GeoDataManagerConfiguration.MERGE_THRESHOLD) &&
+      range.rangeMin.subtract(this.rangeMax).lessThanOrEqual(MERGE_THRESHOLD) &&
       range.rangeMin.greaterThan(this.rangeMax)
     ) {
       this.rangeMax = range.rangeMax;
@@ -23,9 +22,7 @@ export class GeohashRange {
     }
 
     if (
-      this.rangeMin
-        .subtract(range.rangeMax)
-        .lessThanOrEqual(GeoDataManagerConfiguration.MERGE_THRESHOLD) &&
+      this.rangeMin.subtract(range.rangeMax).lessThanOrEqual(MERGE_THRESHOLD) &&
       this.rangeMin.greaterThan(range.rangeMax)
     ) {
       this.rangeMin = range.rangeMin;
@@ -79,8 +76,8 @@ export class GeohashRange {
   public trySplit(hashKeyLength: number): GeohashRange[] {
     const result: GeohashRange[] = [];
 
-    const minHashKey = S2Manager.generateHashKey(this.rangeMin, hashKeyLength);
-    const maxHashKey = S2Manager.generateHashKey(this.rangeMax, hashKeyLength);
+    const minHashKey = generateHashKey(this.rangeMin, hashKeyLength);
+    const maxHashKey = generateHashKey(this.rangeMax, hashKeyLength);
 
     const denominator = Math.pow(
       10,

@@ -1,5 +1,4 @@
-import { GeoDataManager } from "./GeoDataManager";
-import { GeoDataManagerConfiguration } from "./GeoDataManagerConfiguration";
-import { GeoTableUtil } from "./util/GeoTableUtil";
+import GeoTable from "./GeoTable";
 
-export { GeoDataManager, GeoDataManagerConfiguration, GeoTableUtil };
+export * from "./types";
+export default GeoTable;

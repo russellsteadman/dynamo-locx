@@ -1,12 +1,12 @@
 import ava from "ava";
 import { S2RegionCoverer } from "nodes2ts";
-import { S2Util } from "../../src/s2/S2Util";
 import { Covering } from "../../src/model/Covering";
+import { getBoundingLatLngRectFromQueryRadiusInput } from "../../src/s2/S2Util";
 
 ava("Appropriate hash key lengths, 10m radius", (t) => {
   const cov = new Covering(
     new S2RegionCoverer().getCoveringCells(
-      S2Util.getBoundingLatLngRectFromQueryRadiusInput({
+      getBoundingLatLngRectFromQueryRadiusInput({
         RadiusInMeter: 10,
         CenterPoint: {
           latitude: 59,
@@ -27,7 +27,7 @@ ava("Appropriate hash key lengths, 10m radius", (t) => {
 ava("Appropriate hash key lengths, 1km radius", (t) => {
   const cov = new Covering(
     new S2RegionCoverer().getCoveringCells(
-      S2Util.getBoundingLatLngRectFromQueryRadiusInput({
+      getBoundingLatLngRectFromQueryRadiusInput({
         RadiusInMeter: 1000,
         CenterPoint: {
           latitude: 59,
@@ -48,7 +48,7 @@ ava("Appropriate hash key lengths, 1km radius", (t) => {
 ava("Appropriate hash key lengths, 10km radius", (t) => {
   const cov = new Covering(
     new S2RegionCoverer().getCoveringCells(
-      S2Util.getBoundingLatLngRectFromQueryRadiusInput({
+      getBoundingLatLngRectFromQueryRadiusInput({
         RadiusInMeter: 10000,
         CenterPoint: {
           latitude: 59,
@@ -71,7 +71,7 @@ ava("Appropriate hash key lengths, 10km radius", (t) => {
 ava("Appropriate hash key lengths, 50km radius", (t) => {
   const cov = new Covering(
     new S2RegionCoverer().getCoveringCells(
-      S2Util.getBoundingLatLngRectFromQueryRadiusInput({
+      getBoundingLatLngRectFromQueryRadiusInput({
         RadiusInMeter: 50000,
         CenterPoint: {
           latitude: 59,
@@ -93,7 +93,7 @@ ava("Appropriate hash key lengths, 50km radius", (t) => {
 ava("Appropriate hash key lengths, 100km radius", (t) => {
   const cov = new Covering(
     new S2RegionCoverer().getCoveringCells(
-      S2Util.getBoundingLatLngRectFromQueryRadiusInput({
+      getBoundingLatLngRectFromQueryRadiusInput({
         RadiusInMeter: 100000,
         CenterPoint: {
           latitude: 59,
@@ -114,7 +114,7 @@ ava("Appropriate hash key lengths, 100km radius", (t) => {
 ava("Appropriate hash key lengths, 1000km radius", (t) => {
   const cov = new Covering(
     new S2RegionCoverer().getCoveringCells(
-      S2Util.getBoundingLatLngRectFromQueryRadiusInput({
+      getBoundingLatLngRectFromQueryRadiusInput({
         RadiusInMeter: 1000000,
         CenterPoint: {
           latitude: 59,

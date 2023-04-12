@@ -1,4 +1,4 @@
-import * as ddbGeo from "../../src";
+import GeoTable from "../../src";
 import ava from "ava";
 import {
   CreateTableCommand,
@@ -15,17 +15,16 @@ const ddb = new DynamoDBClient({
 });
 
 // Configuration for a new instance of a GeoDataManager. Each GeoDataManager instance represents a table
-const config = new ddbGeo.GeoDataManagerConfiguration(ddb, "test-capitals");
-
-// Instantiate the table manager
-const capitalsManager = new ddbGeo.GeoDataManager(config);
+const locx = new GeoTable({
+  client: ddb,
+  tableName: "GeoTableExample",
+  hashKeyLength: 3,
+  consistentRead: true,
+});
 
 ava.beforeEach(async () => {
-  config.hashKeyLength = 3;
-  config.consistentRead = true;
-
   // Use GeoTableUtil to help construct a CreateTableInput.
-  const createTableInput = ddbGeo.GeoTableUtil.getCreateTableRequest(config);
+  const createTableInput = locx.getCreateTableRequest();
   if (createTableInput.ProvisionedThroughput) {
     createTableInput.ProvisionedThroughput.ReadCapacityUnits = 2;
   }
@@ -34,7 +33,7 @@ ava.beforeEach(async () => {
   // Wait for it to become ready
   await waitUntilTableExists(
     { client: ddb, maxWaitTime: 30 },
-    { TableName: config.tableName }
+    { TableName: locx.tableName }
   );
 
   // Load sample data in batches
@@ -46,7 +45,7 @@ ava.beforeEach(async () => {
         latitude: capital.latitude,
         longitude: capital.longitude,
       },
-      PutItemInput: {
+      PutItemCommandInput: {
         Item: {
           country: { S: capital.country },
           capital: { S: capital.capital },
@@ -77,7 +76,7 @@ ava.beforeEach(async () => {
         Math.ceil(data.length / BATCH_SIZE)
     );
 
-    await capitalsManager.batchWritePoints(thisBatch);
+    await locx.batchWritePoints(thisBatch);
     await new Promise((resolve) =>
       setTimeout(resolve, WAIT_BETWEEN_BATCHES_MS)
     );
@@ -88,7 +87,7 @@ ava("queryRadius", async (t) => {
   t.teardown(teardown);
 
   // Perform a radius query
-  const result = await capitalsManager.queryRadius({
+  const result = await locx.queryRadius({
     RadiusInMeter: 100000,
     CenterPoint: {
       latitude: 52.22573,
@@ -109,5 +108,5 @@ ava("queryRadius", async (t) => {
 });
 
 const teardown = async () => {
-  await ddb.send(new DeleteTableCommand({ TableName: config.tableName }));
+  await ddb.send(new DeleteTableCommand({ TableName: locx.tableName }));
 };
