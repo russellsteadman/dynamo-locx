@@ -18,70 +18,54 @@ npm install dynamo-locx
 
 ## Getting started
 
-Start by setting up the DynamoDB client. This is the same as you would do for any other DynamoDB application. For local development, you can use the following:
+Start by setting up the DynamoDB client. This is the same as you would do for any other DynamoDB application. To test locally, you can run `docker run -p 8000:8000 deangiberson/aws-dynamodb-local` to spin up a local docker instance exposed on port 8000.
+
+Create an instance of `GeoTable` for each geospatial table. This allows you to configure per-table options, but at minimum you must provide a `DynamoDBClient` instance and a table name. See the [configuration reference](#configuration-reference) for more details.
 
 ```js
+import GeoTable from "dynamo-locx";
+// Or, if you are using CommonJS:
+// const GeoTable = require("dynamo-locx").default;
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 
 const ddb = new DynamoDBClient({
   endpoint: "http://localhost:8000", // For local development only
   region: "us-east-1",
 });
-```
 
-To test locally, you can run `docker run -p 8000:8000 deangiberson/aws-dynamodb-local` to spin up a local docker instance exposed on port 8000.
-
-Next, create an instance of `GeoDataManagerConfiguration` for each geospatial table. This allows you to configure per-table options, but at minimum you must provide a `DynamoDB` instance and a table name. See the [configuration reference][#configuration-reference] for more details.
-
-```js
-import ddbGeo from "dynamo-locx";
-
-const config = new ddbGeo.GeoDataManagerConfiguration(ddb, "MyGeoTable");
-config.longitudeFirst = true; // Use spec-compliant GeoJSON, incompatible with awslabs/dynamodb-geo
-```
-
-Then use the configuration to instantiate a manager to query and write to the table.
-
-```js
-const myGeoTableManager = new ddbGeo.GeoDataManager(config);
+const locx = new GeoTable({
+  client: ddb,
+  tableName: "MyGeoTable",
+  hashKeyLength: 3, // See below for explanation
+  // See configuration reference for more options...
+});
 ```
 
 ## Choosing a hash key length
 
 The `hashKeyLength` is the number of most significant digits (in base 10) of the 64-bit geo hash to use as the hash key. Larger numbers will allow small geographical areas to be spread across DynamoDB partitions, but at the cost of performance as more [queries][dynamodb-query] need to be executed for box/radius searches that span hash keys. See [these tests][hashkeylength-tests] for an idea of how query performance scales with `hashKeyLength` for different search radii.
 
-If your data is sparse, a large number will mean more RCUs since more empty queries will be executed and each has a minimum cost. However if your data is dense and `hashKeyLength` too short, more RCUs will be needed to read a hash key and a higher proportion will be discarded by server-side filtering.
+If your data is sparse, a large number will mean more RCUs since more empty queries will be executed and each has a minimum cost. However if your data is dense and `hashKeyLength` is too short, more RCUs will be needed to read a hash key and a higher proportion will be discarded by server-side filtering.
 
-From the [AWS `Query` documentation][dynamodb-query]
+From the [AWS `Query` documentation][dynamodb-query]:
 
 > DynamoDB calculates the number of read capacity units consumed based on item size, not on the amount of data that is returned to an application. ... **The number will also be the same whether or not you use a `FilterExpression`**
 
-Optimally, you should pick the largest `hashKeyLength` your usage scenario allows. The wider your typical radius/box queries, the smaller it will need to be.
+Optimally, you should pick the largest `hashKeyLength` your usage scenario allows. The wider your typical radius/box queries, the smaller it will need to be. Changing your `hashKeyLength` would require you to recreate your table.
 
-Note that the [Java version][dynamodb-geo] uses a `hashKeyLength` of `6` by default. The same value will need to be used if you access the same data with both clients.
+## Creating a GeoTable
 
-This is an important early choice, since changing your `hashKeyLength` will mean recreating your data.
-
-## Creating a table
-
-`GeoTableUtil` has a static method `getCreateTableRequest` for helping you prepare a [DynamoDB CreateTable request][createtable] request, given a `GeoDataManagerConfiguration`.
-
-You can modify this request as desired before executing it using AWS's DynamoDB SDK.
-
-Example:
+`GeoTable` has method `getCreateTableRequest` for to create a [DynamoDB CreateTable request][createtable] request given your configuration. This request can be edited as desired before being sent to DynamoDB. Alternatively, you can create a table using other methods as long as it has the correct schema and indexing. See the [table setup](#table-setup) for details.
 
 ```js
-// Pick a hashKeyLength appropriate to your usage
-config.hashKeyLength = 3;
-
-// Use GeoTableUtil to help construct a CreateTableInput.
-const createTableInput = ddbGeo.GeoTableUtil.getCreateTableRequest(config);
-
-// Tweak the schema as desired
-createTableInput.ProvisionedThroughput.ReadCapacityUnits = 2;
-
-console.log("Creating table with schema:");
-console.dir(createTableInput, { depth: null });
+const createTableInput = locx.getCreateTableRequest({
+  BillingMode: "PROVISIONED",
+  ProvisionedThroughput: {
+    ReadCapacityUnits: 5,
+    WriteCapacityUnits: 5,
+  },
+  // Configure any CreateTableCommandInput options here
+});
 
 // Create the table
 ddb
@@ -90,18 +74,18 @@ ddb
   .then(() =>
     waitForTableToBeReady(
       { client: ddb, maxWaitTime: 20 },
-      { TableName: config.tableName }
+      { TableName: locx.tableName }
     )
   )
-  .then(function () {
+  .then(() => {
     console.log("Table created and ready!");
   });
 ```
 
-## Adding data
+## Adding a GeoPoint
 
 ```js
-myGeoTableManager
+locx
   .putPoint({
     RangeKeyValue: { S: "1234" }, // Use this to ensure uniqueness of the hash/range pairs
     GeoPoint: {
@@ -110,7 +94,7 @@ myGeoTableManager
       latitude: 51.51,
       longitude: -0.13,
     },
-    PutItemInput: {
+    PutItemCommandInput: {
       // Passed through to the underlying PutItem request, TableName is prefilled
       Item: {
         // The primary key, geohash, and geojson data are prefilled
@@ -127,14 +111,14 @@ myGeoTableManager
 
 See also [DynamoDB PutItem request][putitem]
 
-## Updating a specific point
+## Updating a GeoPoint
 
-Note that you cannot update the hash key, range key, geohash or geoJson. If you want to change these, you'll need to recreate the record.
+The hash key, range key, geohash and geoJson cannot be updated. To change these, recreate the record.
 
-You must specify a `RangeKeyValue`, a `GeoPoint`, and an `UpdateItemInput` matching the [DynamoDB UpdateItem][updateitem] request (`TableName` and `Key` are filled in for you).
+You must specify a `RangeKeyValue`, a `GeoPoint`, and an `UpdateItemCommandInput` matching the [DynamoDB UpdateItem][updateitem] request (`TableName` and `Key` are filled in for you).
 
 ```js
-myGeoTableManager
+locx
   .updatePoint({
     RangeKeyValue: { S: "1234" },
     GeoPoint: {
@@ -142,7 +126,7 @@ myGeoTableManager
       latitude: 51.51,
       longitude: -0.13,
     },
-    UpdateItemInput: {
+    UpdateItemCommandInput: {
       // TableName and Key are filled in for you
       UpdateExpression: "SET country = :newName",
       ExpressionAttributeValues: {
@@ -155,12 +139,12 @@ myGeoTableManager
   });
 ```
 
-## Deleting a specific point
+## Deleting a GeoPoint
 
 You must specify a `RangeKeyValue` and a `GeoPoint`. Optionally, you can pass `DeleteItemInput` matching [DynamoDB DeleteItem][deleteitem] request (`TableName` and `Key` are filled in for you).
 
 ```js
-myGeoTableManager
+locx
   .deletePoint({
     RangeKeyValue: { S: "1234" },
     GeoPoint: {
@@ -168,7 +152,7 @@ myGeoTableManager
       latitude: 51.51,
       longitude: -0.13,
     },
-    DeleteItemInput: {
+    DeleteItemCommandInput: {
       // Optional, any additional parameters to pass through.
       // TableName and Key are filled in for you
       // Example: Only delete if the point does not have a country name set
@@ -186,7 +170,7 @@ Query by rectangle by specifying a `MinPoint` and `MaxPoint`.
 
 ```js
 // Querying a rectangle
-myGeoTableManager
+locx
   .queryRectangle({
     MinPoint: {
       latitude: 52.22573,
@@ -207,7 +191,7 @@ Query by radius by specifying a `CenterPoint` and `RadiusInMeter`.
 
 ```js
 // Querying 100km from Cambridge, UK
-myGeoTableManager
+locx
   .queryRadius({
     RadiusInMeter: 100000,
     CenterPoint: {
@@ -225,7 +209,13 @@ TODO: Docs (see [the example][example] for an example of a batch write)
 
 ## Configuration reference
 
-These are public properties of a `GeoDataManagerConfiguration` instance. After creating the config object you may modify these properties.
+#### client: DynamoDBClient
+
+(Required) The [DynamoDBClient][dynamodbclient] to use.
+
+#### tableName: string
+
+(Required) The name of the DynamoDB table to use.
 
 #### consistentRead: boolean = false
 
@@ -276,6 +266,21 @@ The name of the attribute which will contain the longitude/latitude pair in a Ge
 
 The name of the index to be created against the geohash. Only used for creating new tables.
 
+## Table Setup
+
+The library requires a table with a [hash/range primary key pair][hashrange]. The hash key is a number, and the range key is a string. The hash key is specified by the `hashKeyAttributeName` configuration option, and the range key is specified by the `rangeKeyAttributeName` configuration option.
+
+The library also requires a [local secondary index][lsi] with the same hash key and a different range key. This index range key is a number, and it is specified by the `geohashAttributeName` configuration option. The name of the index is specified by the `geohashIndexName` configuration option. This index must project at least the hash key, range key, geohash, and GeoJSON attributes.
+
+### Summary of table setup
+
+- Primary hash key: `hashKeyAttributeName`, default `hashKey` (number)
+- Primary range key: `rangeKeyAttributeName`, default `rangeKey` (string)
+- Local secondary index hash key: same as primary hash key
+- Local secondary index range key: `geohashAttributeName`, default `geohash` (number)
+- Local secondary index name: `geohashIndexName`, default `geohash-index`
+- Local secondary index projection: `ALL` (or at least `hashKeyAttributeName`, `rangeKeyAttributeName`, `geohashAttributeName`, and `geoJsonAttributeName`)
+
 ## Example
 
 See the [example on Github][example]
@@ -292,7 +297,7 @@ Although low level [DynamoDB Query][dynamodb-query] requests return paginated re
 
 ### More Read Capacity Units
 
-The library retrieves candidate Geo points from the cells that intersect the requested bounds. The library then post-processes the candidate data, filtering out the specific points that are outside the requested bounds. Therefore, the consumed Read Capacity Units will be higher than the final results dataset. Typically 8 queries are exectued per radius or box search.
+The library retrieves candidate Geo points from the cells that intersect the requested bounds. The library then post-processes the candidate data, filtering out the specific points that are outside the requested bounds. Therefore, the consumed Read Capacity Units will be higher than the final results dataset. Typically 8 queries are executed per radius or box search.
 
 ### High memory consumption
 
@@ -318,11 +323,12 @@ This project is not affiliated with or endorsed by Amazon Technologies, Inc. or 
 [hashrange]: http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.CoreComponents.html#HowItWorks.CoreComponents.PrimaryKey
 [readconsistency]: http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.ReadConsistency.html
 [geojson]: https://geojson.org/geojson-spec.html
-[example]: https://github.com/russellsteadman/dynamo-locx/tree/master/example
+[example]: https://github.com/russellsteadman/dynamo-locx/tree/main/example
 [dynamodb-geo]: https://github.com/awslabs/dynamodb-geo
 [dynamodb-geo-js]: https://github.com/robhogan/dynamodb-geo.js
 [dynamodb]: http://aws.amazon.com/dynamodb
 [dynamodb-query]: http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Query.html
-[hashkeylength-tests]: https://github.com/russellsteadman/dynamo-locx/blob/master/test/integration/hashKeyLength.ts
+[hashkeylength-tests]: https://github.com/russellsteadman/dynamo-locx/blob/main/test/integration/hashKeyLength.ts
 [choosing-hashkeylength]: #choosing-a-hashkeylength-optimising-for-performance-and-cost
 [aws-sdk-dynamodb]: https://www.npmjs.com/package/@aws-sdk/client-dynamodb
+[dynamodbclient]: https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/index.html

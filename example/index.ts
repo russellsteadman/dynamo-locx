@@ -4,7 +4,7 @@ import {
   DynamoDBClient,
   waitUntilTableExists,
 } from "@aws-sdk/client-dynamodb";
-import * as ddbGeo from "../src";
+import GeoTable from "../src";
 import { v4 as uuid } from "uuid";
 
 // Use a local DB for the example.
@@ -13,17 +13,20 @@ const ddb = new DynamoDBClient({
   region: "us-east-1",
 });
 
-// Configuration for a new instance of a GeoDataManager. Each GeoDataManager instance represents a table
-const config = new ddbGeo.GeoDataManagerConfiguration(ddb, "capitals");
+// Configuration the GeoTable instance
+const locx = new GeoTable({
+  client: ddb,
+  tableName: "capitals",
+});
 
-// Instantiate the table manager
-const capitalsManager = new ddbGeo.GeoDataManager(config);
-
-// Use GeoTableUtil to help construct a CreateTableInput.
-const createTableInput = ddbGeo.GeoTableUtil.getCreateTableRequest(config);
-
-// Tweak the schema as desired
-// createTableInput.ProvisionedThroughput.ReadCapacityUnits = 2;
+// Construct a CreateTableCommandInput.
+const createTableInput = locx.getCreateTableRequest({
+  BillingMode: "PROVISIONED",
+  ProvisionedThroughput: {
+    ReadCapacityUnits: 5,
+    WriteCapacityUnits: 5,
+  },
+});
 
 console.log("Creating table with schema:");
 console.dir(createTableInput, { depth: null });
@@ -35,12 +38,12 @@ ddb
   .then(() =>
     waitUntilTableExists(
       { client: ddb, maxWaitTime: 20 },
-      { TableName: config.tableName }
+      { TableName: locx.tableName }
     )
   )
 
   // Load sample data in batches
-  .then(function () {
+  .then(() => {
     console.log("Loading sample data from capitals.json");
     const data = require("./capitals.json");
     const putPointInputs = data.map(function (capital) {
@@ -50,7 +53,7 @@ ddb
           latitude: capital.latitude,
           longitude: capital.longitude,
         },
-        PutItemInput: {
+        PutItemCommandInput: {
           Item: {
             country: { S: capital.country },
             capital: { S: capital.capital },
@@ -81,7 +84,7 @@ ddb
           "/" +
           Math.ceil(data.length / BATCH_SIZE)
       );
-      return capitalsManager
+      return locx
         .batchWritePoints(thisBatch)
         .then(function () {
           return new Promise(function (resolve) {
@@ -100,7 +103,7 @@ ddb
   // Perform a radius query
   .then(function () {
     console.log("Querying by radius, looking 100km from Cambridge, UK.");
-    return capitalsManager.queryRadius({
+    return locx.queryRadius({
       RadiusInMeter: 100000,
       CenterPoint: {
         latitude: 52.22573,
@@ -112,7 +115,7 @@ ddb
   .then(console.log)
   // Clean up
   .then(function () {
-    return ddb.send(new DeleteTableCommand({ TableName: config.tableName }));
+    return ddb.send(new DeleteTableCommand({ TableName: locx.tableName }));
   })
   .catch(console.warn)
   .then(function () {

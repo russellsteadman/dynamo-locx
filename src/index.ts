@@ -1,5 +1,3 @@
-import { GeoDataManager } from "./GeoDataManager";
-import { GeoDataManagerConfiguration } from "./GeoDataManagerConfiguration";
-import { GeoTableUtil } from "./util/GeoTableUtil";
+export * from './types.js';
 
-export { GeoDataManager, GeoDataManagerConfiguration, GeoTableUtil };
+export { GeoTable as default } from './geotable.js';

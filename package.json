@@ -1,15 +1,31 @@
 {
   "name": "dynamo-locx",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Simple geospatial querying for Amazon DynamoDB",
   "scripts": {
-    "prepublish": "tsc",
+    "prepublish": "npm run build",
     "clean": "rimraf dist",
-    "build": "tsc",
-    "test": "ava test/**/*.ts"
+    "lint": "xo src/**/*",
+    "build": "npm run clean && tsc && tsc -p tsconfig.cjs.json",
+    "pretest": "npm run build",
+    "test": "xo src/**/* && ava"
   },
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "dist/cjs/index.js",
+  "types": "dist/cjs/index.d.ts",
+  "type": "module",
+  "module": "dist/index.js",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/cjs/index.d.ts",
+        "default": "./dist/cjs/index.js"
+      }
+    }
+  },
   "author": "Russell Steadman <code@steadman.email> (https://www.russellsteadman.com/)",
   "repository": "https://github.com/russellsteadman/dynamo-locx.git",
   "license": "Apache-2.0",
@@ -26,27 +42,53 @@
     "geolocation"
   ],
   "dependencies": {
-    "long": "^5.2.1",
+    "long": "^5.0.1",
     "nodes2ts": "^2.0.0"
   },
   "devDependencies": {
-    "@aws-sdk/client-dynamodb": "^3.309.0",
+    "@ava/typescript": "^4.0.0",
+    "@aws-sdk/client-dynamodb": "^3.312.0",
     "ava": "^5.2.0",
+    "prettier": "^2.8.7",
     "rimraf": "^5.0.0",
     "ts-node": "^10.9.1",
     "typescript": "^5.0.4",
-    "uuid": "^9.0.0"
+    "uuid": "^9.0.0",
+    "xo": "^0.54.1"
   },
   "peerDependencies": {
     "@aws-sdk/client-dynamodb": "^3.309.0"
   },
   "ava": {
-    "extensions": [
-      "ts"
+    "typescript": {
+      "rewritePaths": {
+        "src/": "dist/"
+      },
+      "compile": "tsc"
+    },
+    "timeout": "30s",
+    "files": [
+      "src/test/**/*.spec.ts"
+    ]
+  },
+  "xo": {
+    "prettier": true,
+    "envs": [
+      "node",
+      "es2020"
     ],
-    "require": [
-      "ts-node/register"
-    ],
-    "timeout": "600s"
+    "rules": {
+      "@typescript-eslint/naming-convention": [
+        "error",
+        {
+          "format": [
+            "camelCase",
+            "PascalCase",
+            "UPPER_CASE"
+          ],
+          "selector": "default"
+        }
+      ]
+    }
   }
 }
