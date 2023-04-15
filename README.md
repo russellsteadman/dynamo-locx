@@ -24,6 +24,8 @@ Create an instance of `GeoTable` for each geospatial table. This allows you to c
 
 ```js
 import GeoTable from "dynamo-locx";
+// Or, if you are using CommonJS:
+// const GeoTable = require("dynamo-locx").default;
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 
 const ddb = new DynamoDBClient({

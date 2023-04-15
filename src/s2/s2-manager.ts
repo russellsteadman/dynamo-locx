@@ -13,15 +13,15 @@
  * permissions and limitations under the License.
  */
 
-import { S2Cell, S2LatLng } from "nodes2ts";
-import { GeoPoint } from "../types";
-import type Long from "long";
+import { S2Cell, S2LatLng } from 'nodes2ts';
+import type Long from 'long';
+import { type GeoPoint } from '../types.js';
 
 export const generateGeohash = (geoPoint: GeoPoint): Long => {
   const latLng = S2LatLng.fromDegrees(geoPoint.latitude, geoPoint.longitude);
   const cell = S2Cell.fromLatLng(latLng);
   const cellId = cell.id;
-  return cellId.id;
+  return cellId.id as Long;
 };
 
 export const generateHashKey = (geohash: Long, hashKeyLength: number): Long => {
@@ -31,6 +31,6 @@ export const generateHashKey = (geohash: Long, hashKeyLength: number): Long => {
   }
 
   const geohashString = geohash.toString(10);
-  const denominator = Math.pow(10, geohashString.length - hashKeyLength);
+  const denominator = 10 ** (geohashString.length - hashKeyLength);
   return geohash.divide(denominator);
 };

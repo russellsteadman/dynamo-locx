@@ -1,53 +1,53 @@
 import {
-  CreateTableCommandInput,
-  DynamoDBClient,
-  PutItemCommandInput,
-  QueryCommandInput,
-  QueryCommandOutput,
-  AttributeValue,
-  Condition,
-  WriteRequest,
+  type CreateTableCommandInput,
+  type DynamoDBClient,
+  type PutItemCommandInput,
+  type QueryCommandInput,
+  type QueryCommandOutput,
+  type AttributeValue,
+  type Condition,
+  type WriteRequest,
   QueryCommand,
   GetItemCommand,
   PutItemCommand,
   BatchWriteItemCommand,
   UpdateItemCommand,
   DeleteItemCommand,
-  GetItemCommandInput,
-  UpdateItemCommandInput,
-} from "@aws-sdk/client-dynamodb";
+  type GetItemCommandInput,
+  type UpdateItemCommandInput,
+} from '@aws-sdk/client-dynamodb';
+import type Long from 'long';
+import { S2LatLng, type S2LatLngRect, S2RegionCoverer } from 'nodes2ts';
 import {
-  BatchWritePointOutput,
-  DeletePointInput,
-  DeletePointOutput,
-  GetPointInput,
-  GetPointOutput,
-  PutPointInput,
-  PutPointOutput,
-  UpdatePointInput,
-  UpdatePointOutput,
-  GeoPoint,
-  GeoQueryInput,
-  QueryRadiusInput,
-  QueryRectangleInput,
-  ItemList,
-  GeoTableConfiguration,
-} from "./types";
-import { GeohashRange } from "./model/GeohashRange";
-import Long from "long";
-import { S2LatLng, S2LatLngRect, S2RegionCoverer } from "nodes2ts";
-import { Covering } from "./model/Covering";
-import { generateGeohash, generateHashKey } from "./s2/S2Manager";
+  type BatchWritePointOutput,
+  type DeletePointInput,
+  type DeletePointOutput,
+  type GetPointInput,
+  type GetPointOutput,
+  type PutPointInput,
+  type PutPointOutput,
+  type UpdatePointInput,
+  type UpdatePointOutput,
+  type GeoPoint,
+  type GeoQueryInput,
+  type QueryRadiusInput,
+  type QueryRectangleInput,
+  type ItemList,
+  type GeoTableConfiguration,
+} from './types.js';
+import type { GeohashRange } from './model/geohash-range.js';
+import { Covering } from './model/covering.js';
+import { generateGeohash, generateHashKey } from './s2/s2-manager.js';
 import {
   getBoundingLatLngRectFromQueryRadiusInput,
   latLngRectFromQueryRectangleInput,
-} from "./s2/S2Util";
+} from './s2/s2-utils.js';
 
 type PartialBy<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
 
-class GeoTable {
-  protected client: DynamoDBClient;
+export class GeoTable {
   readonly tableName: string;
+  protected client: DynamoDBClient;
 
   protected consistentRead: boolean;
   protected hashKeyAttributeName: string;
@@ -57,40 +57,40 @@ class GeoTable {
   protected geohashIndexName: string;
   protected hashKeyLength: number;
   protected longitudeFirst: boolean;
-  protected geoJsonPointType: "Point" | "POINT";
+  protected geoJsonPointType: 'Point' | 'POINT';
 
   constructor(config: GeoTableConfiguration) {
     this.tableName = config.tableName;
     this.client = config.client;
 
     this.consistentRead = config.consistentRead ?? false;
-    this.hashKeyAttributeName = config.hashKeyAttributeName ?? "hashKey";
-    this.rangeKeyAttributeName = config.rangeKeyAttributeName ?? "rangeKey";
-    this.geohashAttributeName = config.geohashAttributeName ?? "geohash";
-    this.geoJsonAttributeName = config.geoJsonAttributeName ?? "geoJson";
-    this.geohashIndexName = config.geohashIndexName ?? "geohash-index";
+    this.hashKeyAttributeName = config.hashKeyAttributeName ?? 'hashKey';
+    this.rangeKeyAttributeName = config.rangeKeyAttributeName ?? 'rangeKey';
+    this.geohashAttributeName = config.geohashAttributeName ?? 'geohash';
+    this.geoJsonAttributeName = config.geoJsonAttributeName ?? 'geoJson';
+    this.geohashIndexName = config.geohashIndexName ?? 'geohash-index';
     this.hashKeyLength = config.hashKeyLength ?? 2;
     this.longitudeFirst = config.longitudeFirst ?? true;
-    this.geoJsonPointType = config.geoJsonPointType ?? "Point";
+    this.geoJsonPointType = config.geoJsonPointType ?? 'Point';
   }
 
   /**
    * Query the table by geohash for a given range of geohashes
    */
   public async queryGeohash(
-    queryInput: Omit<QueryCommandInput, "TableName"> | undefined,
+    queryInput: Omit<QueryCommandInput, 'TableName'> | undefined,
     hashKey: Long,
-    range: GeohashRange
+    range: GeohashRange,
   ): Promise<QueryCommandOutput[]> {
     const queryOutputs: QueryCommandOutput[] = [];
 
     const nextQuery = async (
-      lastEvaluatedKey?: Record<string, AttributeValue>
+      lastEvaluatedKey?: Record<string, AttributeValue>,
     ): Promise<QueryCommandOutput[]> => {
-      const keyConditions: { [key: string]: Condition } = {};
+      const keyConditions: Record<string, Condition> = {};
 
       keyConditions[this.hashKeyAttributeName] = {
-        ComparisonOperator: "EQ",
+        ComparisonOperator: 'EQ',
         AttributeValueList: [{ N: hashKey.toString(10) }],
       };
 
@@ -102,7 +102,7 @@ class GeoTable {
       };
 
       keyConditions[this.geohashAttributeName] = {
-        ComparisonOperator: "BETWEEN",
+        ComparisonOperator: 'BETWEEN',
         AttributeValueList: [minRange, maxRange],
       };
 
@@ -111,7 +111,7 @@ class GeoTable {
         KeyConditions: keyConditions,
         IndexName: this.geohashIndexName,
         ConsistentRead: this.consistentRead,
-        ReturnConsumedCapacity: "TOTAL",
+        ReturnConsumedCapacity: 'TOTAL',
         ExclusiveStartKey: lastEvaluatedKey,
       };
 
@@ -119,7 +119,7 @@ class GeoTable {
         new QueryCommand({
           ...defaults,
           ...queryInput,
-        })
+        }),
       );
 
       queryOutputs.push(queryOutput);
@@ -137,7 +137,7 @@ class GeoTable {
   /**
    * Get a point from the table
    */
-  public getPoint(getPointInput: GetPointInput): Promise<GetPointOutput> {
+  public async getPoint(getPointInput: GetPointInput): Promise<GetPointOutput> {
     const geohash = generateGeohash(getPointInput.GeoPoint);
     const hashKey = generateHashKey(geohash, this.hashKeyLength);
 
@@ -157,7 +157,7 @@ class GeoTable {
   /**
    * Put a point into the table
    */
-  public putPoint(putPointInput: PutPointInput): Promise<PutPointOutput> {
+  public async putPoint(putPointInput: PutPointInput): Promise<PutPointOutput> {
     const geohash = generateGeohash(putPointInput.GeoPoint);
     const hashKey = generateHashKey(geohash, this.hashKeyLength);
     const putItemInput: PutItemCommandInput = {
@@ -192,11 +192,11 @@ class GeoTable {
   /**
    * Batch write points into the table
    */
-  public batchWritePoints(
-    putPointInputs: PutPointInput[]
+  public async batchWritePoints(
+    putPointInputs: PutPointInput[],
   ): Promise<BatchWritePointOutput> {
     const writeInputs: WriteRequest[] = [];
-    putPointInputs.forEach((putPointInput) => {
+    for (const putPointInput of putPointInputs) {
       const geohash = generateGeohash(putPointInput.GeoPoint);
       const hashKey = generateHashKey(geohash, this.hashKeyLength);
       const putItemInput = putPointInput.PutItemCommandInput;
@@ -204,7 +204,7 @@ class GeoTable {
       const putRequest: PutItemCommandInput = {
         ...putItemInput,
         TableName: this.tableName,
-        Item: putItemInput.Item || {},
+        Item: putItemInput.Item ?? {},
       };
 
       const item = putItemInput.Item ?? {};
@@ -234,22 +234,22 @@ class GeoTable {
       putRequest.Item = item;
 
       writeInputs.push({ PutRequest: putRequest });
-    });
+    }
 
     return this.client.send(
       new BatchWriteItemCommand({
         RequestItems: {
           [this.tableName]: writeInputs,
         },
-      })
+      }),
     );
   }
 
   /**
    * Update a point in the table
    */
-  public updatePoint(
-    updatePointInput: UpdatePointInput
+  public async updatePoint(
+    updatePointInput: UpdatePointInput,
   ): Promise<UpdatePointOutput> {
     const geohash = generateGeohash(updatePointInput.GeoPoint);
     const hashKey = generateHashKey(geohash, this.hashKeyLength);
@@ -268,7 +268,9 @@ class GeoTable {
 
     // Geohash and geoJson cannot be updated.
     if (updateItemInput.AttributeUpdates) {
+      // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
       delete updateItemInput.AttributeUpdates[this.geohashAttributeName];
+      // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
       delete updateItemInput.AttributeUpdates[this.geoJsonAttributeName];
     }
 
@@ -278,8 +280,8 @@ class GeoTable {
   /**
    * Delete a point from the table
    */
-  public deletePoint(
-    deletePointInput: DeletePointInput
+  public async deletePoint(
+    deletePointInput: DeletePointInput,
   ): Promise<DeletePointOutput> {
     const geohash = generateGeohash(deletePointInput.GeoPoint);
     const hashKey = generateHashKey(geohash, this.hashKeyLength);
@@ -292,7 +294,7 @@ class GeoTable {
           [this.hashKeyAttributeName]: { N: hashKey.toString(10) },
           [this.rangeKeyAttributeName]: deletePointInput.RangeKeyValue,
         },
-      })
+      }),
     );
   }
 
@@ -302,13 +304,13 @@ class GeoTable {
    * maxPoint.getLongitude(), the rectangle spans the 180 degree longitude line.
    */
   public async queryRectangle(
-    queryRectangleInput: QueryRectangleInput
+    queryRectangleInput: QueryRectangleInput,
   ): Promise<ItemList> {
     const latLngRect: S2LatLngRect =
       latLngRectFromQueryRectangleInput(queryRectangleInput);
 
     const covering = new Covering(
-      new S2RegionCoverer().getCoveringCells(latLngRect)
+      new S2RegionCoverer().getCoveringCells(latLngRect),
     );
 
     const results = await this.dispatchQueries(covering, queryRectangleInput);
@@ -319,13 +321,13 @@ class GeoTable {
    * Query a circular area constructed by a center point and its radius.
    */
   public async queryRadius(
-    queryRadiusInput: QueryRadiusInput
+    queryRadiusInput: QueryRadiusInput,
   ): Promise<ItemList> {
     const latLngRect: S2LatLngRect =
       getBoundingLatLngRectFromQueryRadiusInput(queryRadiusInput);
 
     const covering = new Covering(
-      new S2RegionCoverer().getCoveringCells(latLngRect)
+      new S2RegionCoverer().getCoveringCells(latLngRect),
     );
 
     const results = await this.dispatchQueries(covering, queryRadiusInput);
@@ -333,30 +335,79 @@ class GeoTable {
   }
 
   /**
+   * Construct a create table request object based on GeoDataManagerConfiguration. The users can update any aspect of
+   * the request and call it.
+   */
+  public getCreateTableRequest(
+    createTableInput?: PartialBy<
+      Omit<CreateTableCommandInput, 'TableName' | 'KeySchema'>,
+      'AttributeDefinitions'
+    >,
+  ): CreateTableCommandInput {
+    return {
+      ...createTableInput,
+      TableName: this.tableName,
+      KeySchema: [
+        {
+          KeyType: 'HASH',
+          AttributeName: this.hashKeyAttributeName,
+        },
+        {
+          KeyType: 'RANGE',
+          AttributeName: this.rangeKeyAttributeName,
+        },
+      ],
+      AttributeDefinitions: [
+        ...(createTableInput?.AttributeDefinitions ?? []),
+        { AttributeName: this.hashKeyAttributeName, AttributeType: 'N' },
+        { AttributeName: this.rangeKeyAttributeName, AttributeType: 'S' },
+        { AttributeName: this.geohashAttributeName, AttributeType: 'N' },
+      ],
+      LocalSecondaryIndexes: [
+        ...(createTableInput?.LocalSecondaryIndexes ?? []),
+        {
+          IndexName: this.geohashIndexName,
+          KeySchema: [
+            {
+              KeyType: 'HASH',
+              AttributeName: this.hashKeyAttributeName,
+            },
+            {
+              KeyType: 'RANGE',
+              AttributeName: this.geohashAttributeName,
+            },
+          ],
+          Projection: {
+            ProjectionType: 'ALL',
+          },
+        },
+      ],
+    };
+  }
+
+  /**
    * Query Amazon DynamoDB in parallel and filter the result.
    */
   protected async dispatchQueries(
     covering: Covering,
-    geoQueryInput: GeoQueryInput
+    geoQueryInput: GeoQueryInput,
   ): Promise<ItemList> {
-    const promises: Promise<QueryCommandOutput[]>[] = covering
+    const promises: Array<Promise<QueryCommandOutput[]>> = covering
       .getGeoHashRanges(this.hashKeyLength)
-      .map((range) => {
+      .map(async (range) => {
         const hashKey = generateHashKey(range.rangeMin, this.hashKeyLength);
         return this.queryGeohash(
           geoQueryInput.QueryCommandInput,
           hashKey,
-          range
+          range,
         );
       });
 
     const results: QueryCommandOutput[][] = await Promise.all(promises);
     const mergedResults: ItemList = [];
-    results.forEach((queryOutputs) =>
-      queryOutputs.forEach((queryOutput) =>
-        mergedResults.push(...(queryOutput.Items ?? []))
-      )
-    );
+    for (const queryOutputs of results)
+      for (const queryOutput of queryOutputs)
+        mergedResults.push(...(queryOutput.Items ?? []));
     return mergedResults;
   }
 
@@ -365,21 +416,20 @@ class GeoTable {
    */
   protected filterByRadius(
     list: ItemList,
-    geoQueryInput: QueryRadiusInput
+    geoQueryInput: QueryRadiusInput,
   ): ItemList {
     let radiusInMeter = 0;
 
-    const centerPoint: GeoPoint = (geoQueryInput as QueryRadiusInput)
-      .CenterPoint;
-    let centerLatLng: S2LatLng = S2LatLng.fromDegrees(
+    const centerPoint: GeoPoint = geoQueryInput.CenterPoint;
+    const centerLatLng: S2LatLng = S2LatLng.fromDegrees(
       centerPoint.latitude,
-      centerPoint.longitude
+      centerPoint.longitude,
     );
-    radiusInMeter = (geoQueryInput as QueryRadiusInput).RadiusInMeter;
+    radiusInMeter = geoQueryInput.RadiusInMeter;
 
     return list.filter((item) => {
-      const geoJson: string = item[this.geoJsonAttributeName].S ?? "";
-      const coordinates = JSON.parse(geoJson).coordinates;
+      const geoJson: string = item[this.geoJsonAttributeName].S ?? '';
+      const coordinates = JSON.parse(geoJson).coordinates as [number, number];
       const longitude = coordinates[this.longitudeFirst ? 0 : 1];
       const latitude = coordinates[this.longitudeFirst ? 1 : 0];
 
@@ -393,14 +443,14 @@ class GeoTable {
    */
   protected filterByRectangle(
     list: ItemList,
-    geoQueryInput: QueryRectangleInput
+    geoQueryInput: QueryRectangleInput,
   ): ItemList {
     const latLngRect: S2LatLngRect =
       latLngRectFromQueryRectangleInput(geoQueryInput);
 
     return list.filter((item) => {
-      const geoJson: string = item[this.geoJsonAttributeName].S ?? "";
-      const coordinates = JSON.parse(geoJson).coordinates;
+      const geoJson: string = item[this.geoJsonAttributeName].S ?? '';
+      const coordinates = JSON.parse(geoJson).coordinates as [number, number];
       const longitude = coordinates[this.longitudeFirst ? 0 : 1];
       const latitude = coordinates[this.longitudeFirst ? 1 : 0];
 
@@ -408,57 +458,4 @@ class GeoTable {
       return latLngRect.containsLL(latLng);
     });
   }
-
-  /**
-   * Construct a create table request object based on GeoDataManagerConfiguration. The users can update any aspect of
-   * the request and call it.
-   */
-  public getCreateTableRequest(
-    createTableInput?: PartialBy<
-      Omit<CreateTableCommandInput, "TableName" | "KeySchema">,
-      "AttributeDefinitions"
-    >
-  ): CreateTableCommandInput {
-    return {
-      ...createTableInput,
-      TableName: this.tableName,
-      KeySchema: [
-        {
-          KeyType: "HASH",
-          AttributeName: this.hashKeyAttributeName,
-        },
-        {
-          KeyType: "RANGE",
-          AttributeName: this.rangeKeyAttributeName,
-        },
-      ],
-      AttributeDefinitions: [
-        ...(createTableInput?.AttributeDefinitions ?? []),
-        { AttributeName: this.hashKeyAttributeName, AttributeType: "N" },
-        { AttributeName: this.rangeKeyAttributeName, AttributeType: "S" },
-        { AttributeName: this.geohashAttributeName, AttributeType: "N" },
-      ],
-      LocalSecondaryIndexes: [
-        ...(createTableInput?.LocalSecondaryIndexes ?? []),
-        {
-          IndexName: this.geohashIndexName,
-          KeySchema: [
-            {
-              KeyType: "HASH",
-              AttributeName: this.hashKeyAttributeName,
-            },
-            {
-              KeyType: "RANGE",
-              AttributeName: this.geohashAttributeName,
-            },
-          ],
-          Projection: {
-            ProjectionType: "ALL",
-          },
-        },
-      ],
-    };
-  }
 }
-
-export default GeoTable;

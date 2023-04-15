@@ -1,5 +1,5 @@
-import Long from "long";
-import { generateHashKey } from "../s2/S2Manager";
+import Long from 'long';
+import { generateHashKey } from '../s2/s2-manager.js';
 
 const MERGE_THRESHOLD = 2;
 
@@ -8,8 +8,8 @@ export class GeohashRange {
   rangeMax: Long;
 
   constructor(min: Long | number, max: Long | number) {
-    this.rangeMin = Long.isLong(min) ? <Long>min : Long.fromNumber(<number>min);
-    this.rangeMax = Long.isLong(max) ? <Long>max : Long.fromNumber(<number>max);
+    this.rangeMin = Long.isLong(min) ? min : Long.fromNumber(min);
+    this.rangeMax = Long.isLong(max) ? max : Long.fromNumber(max);
   }
 
   public tryMerge(range: GeohashRange): boolean {
@@ -79,10 +79,8 @@ export class GeohashRange {
     const minHashKey = generateHashKey(this.rangeMin, hashKeyLength);
     const maxHashKey = generateHashKey(this.rangeMax, hashKeyLength);
 
-    const denominator = Math.pow(
-      10,
-      this.rangeMin.toString().length - minHashKey.toString().length
-    );
+    const denominator =
+      10 ** (this.rangeMin.toString().length - minHashKey.toString().length);
 
     if (minHashKey.equals(maxHashKey)) {
       result.push(this);
@@ -94,8 +92,8 @@ export class GeohashRange {
               l.equals(minHashKey) ? this.rangeMin : l.multiply(denominator),
               l.equals(maxHashKey)
                 ? this.rangeMax
-                : l.add(1).multiply(denominator).subtract(1)
-            )
+                : l.add(1).multiply(denominator).subtract(1),
+            ),
           );
         } else {
           result.push(
@@ -103,8 +101,8 @@ export class GeohashRange {
               l.equals(minHashKey)
                 ? this.rangeMin
                 : l.subtract(1).multiply(denominator).add(1),
-              l.equals(maxHashKey) ? this.rangeMax : l.multiply(denominator)
-            )
+              l.equals(maxHashKey) ? this.rangeMax : l.multiply(denominator),
+            ),
           );
         }
       }

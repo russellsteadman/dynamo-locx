@@ -1,4 +1,3 @@
-import GeoTable from "./GeoTable";
+export * from './types.js';
 
-export * from "./types";
-export default GeoTable;
+export { GeoTable as default } from './geotable.js';

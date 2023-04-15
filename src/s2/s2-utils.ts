@@ -1,10 +1,10 @@
-import { QueryRadiusInput, QueryRectangleInput } from "../types";
-import { S2LatLng, S2LatLngRect } from "nodes2ts";
+import { S2LatLng, S2LatLngRect } from 'nodes2ts';
+import { type QueryRadiusInput, type QueryRectangleInput } from '../types.js';
 
 export const latLngRectFromQueryRectangleInput = (
-  geoQueryRequest: QueryRectangleInput
+  geoQueryRequest: QueryRectangleInput,
 ): S2LatLngRect => {
-  const queryRectangleRequest = geoQueryRequest as QueryRectangleInput;
+  const queryRectangleRequest = geoQueryRequest;
 
   const minPoint = queryRectangleRequest.MinPoint;
   const maxPoint = queryRectangleRequest.MaxPoint;
@@ -12,39 +12,39 @@ export const latLngRectFromQueryRectangleInput = (
   if (minPoint && maxPoint) {
     const minLatLng = S2LatLng.fromDegrees(
       minPoint.latitude,
-      minPoint.longitude
+      minPoint.longitude,
     );
     const maxLatLng = S2LatLng.fromDegrees(
       maxPoint.latitude,
-      maxPoint.longitude
+      maxPoint.longitude,
     );
 
     return S2LatLngRect.fromLatLng(minLatLng, maxLatLng);
   }
 
-  throw new Error("Invalid query rectangle input.");
+  throw new Error('Invalid query rectangle input.');
 };
 
 export const getBoundingLatLngRectFromQueryRadiusInput = (
-  geoQueryRequest: QueryRadiusInput
+  geoQueryRequest: QueryRadiusInput,
 ): S2LatLngRect => {
   const centerPoint = geoQueryRequest.CenterPoint;
   const radiusInMeter = geoQueryRequest.RadiusInMeter;
 
   const centerLatLng = S2LatLng.fromDegrees(
     centerPoint.latitude,
-    centerPoint.longitude
+    centerPoint.longitude,
   );
 
-  const latReferenceUnit = centerPoint.latitude > 0.0 ? -1.0 : 1.0;
+  const latReferenceUnit = centerPoint.latitude > 0 ? -1 : 1;
   const latReferenceLatLng = S2LatLng.fromDegrees(
     centerPoint.latitude + latReferenceUnit,
-    centerPoint.longitude
+    centerPoint.longitude,
   );
-  const lngReferenceUnit = centerPoint.longitude > 0.0 ? -1.0 : 1.0;
+  const lngReferenceUnit = centerPoint.longitude > 0 ? -1 : 1;
   const lngReferenceLatLng = S2LatLng.fromDegrees(
     centerPoint.latitude,
-    centerPoint.longitude + lngReferenceUnit
+    centerPoint.longitude + lngReferenceUnit,
   );
 
   const latForRadius =
@@ -54,11 +54,11 @@ export const getBoundingLatLngRectFromQueryRadiusInput = (
 
   const minLatLng = S2LatLng.fromDegrees(
     centerPoint.latitude - latForRadius,
-    centerPoint.longitude - lngForRadius
+    centerPoint.longitude - lngForRadius,
   );
   const maxLatLng = S2LatLng.fromDegrees(
     centerPoint.latitude + latForRadius,
-    centerPoint.longitude + lngForRadius
+    centerPoint.longitude + lngForRadius,
   );
 
   return S2LatLngRect.fromLatLng(minLatLng, maxLatLng);

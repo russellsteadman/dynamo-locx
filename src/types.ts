@@ -1,18 +1,18 @@
 import {
-  AttributeValue,
-  BatchWriteItemCommandOutput,
-  DeleteItemCommandOutput,
-  QueryCommandOutput,
-  GetItemCommandOutput,
-  PutItemCommandOutput,
-  QueryCommandInput,
-  UpdateItemCommandInput,
-  UpdateItemCommandOutput,
-  PutItemCommandInput,
-  GetItemCommandInput,
-  DeleteItemCommandInput,
-  DynamoDBClient,
-} from "@aws-sdk/client-dynamodb";
+  type AttributeValue,
+  type BatchWriteItemCommandOutput,
+  type DeleteItemCommandOutput,
+  type QueryCommandOutput,
+  type GetItemCommandOutput,
+  type PutItemCommandOutput,
+  type QueryCommandInput,
+  type UpdateItemCommandInput,
+  type UpdateItemCommandOutput,
+  type PutItemCommandInput,
+  type GetItemCommandInput,
+  type DeleteItemCommandInput,
+  type DynamoDBClient,
+} from '@aws-sdk/client-dynamodb';
 
 export type GeoTableConfiguration = {
   client: DynamoDBClient;
@@ -26,62 +26,62 @@ export type GeoTableConfiguration = {
   geohashIndexName?: string;
   hashKeyLength?: number;
   longitudeFirst?: boolean;
-  geoJsonPointType?: "Point" | "POINT";
+  geoJsonPointType?: 'Point' | 'POINT';
 };
 
-export type ItemList = Record<string, AttributeValue>[];
+export type ItemList = Array<Record<string, AttributeValue>>;
 
-export interface BatchWritePointOutput extends BatchWriteItemCommandOutput {}
+export type BatchWritePointOutput = BatchWriteItemCommandOutput;
 
-export interface DeletePointInput {
+export type DeletePointInput = {
   RangeKeyValue: AttributeValue;
   GeoPoint: GeoPoint;
-  DeleteItemCommandInput?: Omit<DeleteItemCommandInput, "TableName">;
-}
-export interface DeletePointOutput extends DeleteItemCommandOutput {}
+  DeleteItemCommandInput?: Omit<DeleteItemCommandInput, 'TableName'>;
+};
+export type DeletePointOutput = DeleteItemCommandOutput;
 
-export interface GeoPoint {
+export type GeoPoint = {
   latitude: number;
   longitude: number;
-}
+};
 
-export interface GeoQueryInput {
-  QueryCommandInput?: Omit<QueryCommandInput, "TableName">;
-}
-export interface GeoQueryOutput extends QueryCommandOutput {}
+export type GeoQueryInput = {
+  QueryCommandInput?: Omit<QueryCommandInput, 'TableName'>;
+};
+export type GeoQueryOutput = QueryCommandOutput;
 
-export interface GetPointInput {
+export type GetPointInput = {
   RangeKeyValue: AttributeValue;
   GeoPoint: GeoPoint;
-  GetItemCommandInput: Omit<GetItemCommandInput, "TableName">;
-}
-export interface GetPointOutput extends GetItemCommandOutput {}
+  GetItemCommandInput: Omit<GetItemCommandInput, 'TableName'>;
+};
+export type GetPointOutput = GetItemCommandOutput;
 
-export interface PutPointInput {
+export type PutPointInput = {
   RangeKeyValue: AttributeValue;
   GeoPoint: GeoPoint;
-  PutItemCommandInput: Omit<PutItemCommandInput, "TableName">;
-}
-export interface PutPointOutput extends PutItemCommandOutput {}
+  PutItemCommandInput: Omit<PutItemCommandInput, 'TableName'>;
+};
+export type PutPointOutput = PutItemCommandOutput;
 
-export interface QueryRadiusInput extends GeoQueryInput {
+export type QueryRadiusInput = {
   RadiusInMeter: number;
   CenterPoint: GeoPoint;
-}
-export interface QueryRadiusOutput extends GeoQueryOutput {}
+} & GeoQueryInput;
+export type QueryRadiusOutput = GeoQueryOutput;
 
-export interface QueryRectangleInput extends GeoQueryInput {
+export type QueryRectangleInput = {
   MinPoint: GeoPoint;
   MaxPoint: GeoPoint;
-}
-export interface QueryRectangleOutput extends GeoQueryOutput {}
+} & GeoQueryInput;
+export type QueryRectangleOutput = GeoQueryOutput;
 
-export interface UpdatePointInput {
+export type UpdatePointInput = {
   RangeKeyValue: AttributeValue;
   GeoPoint: GeoPoint;
   UpdateItemCommandInput: Omit<
-    Omit<UpdateItemCommandInput, "TableName">,
-    "Key"
+    Omit<UpdateItemCommandInput, 'TableName'>,
+    'Key'
   >;
-}
-export interface UpdatePointOutput extends UpdateItemCommandOutput {}
+};
+export type UpdatePointOutput = UpdateItemCommandOutput;
