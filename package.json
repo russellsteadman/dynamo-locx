@@ -3,10 +3,11 @@
   "version": "1.0.0",
   "description": "Simple geospatial querying for Amazon DynamoDB",
   "scripts": {
-    "prepublish": "tsc && tsc -p tsconfig.cjs.json",
+    "prepublish": "npm run build",
     "clean": "rimraf dist",
     "lint": "xo src/**/*",
-    "build": "tsc && tsc -p tsconfig.cjs.json",
+    "build": "npm run clean && tsc && tsc -p tsconfig.cjs.json",
+    "pretest": "npm run build",
     "test": "xo src/**/* && ava"
   },
   "main": "dist/cjs/index.js",
