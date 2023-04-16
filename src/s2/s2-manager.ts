@@ -21,7 +21,7 @@ export const generateGeohash = (geoPoint: GeoPoint): Long => {
   const latLng = S2LatLng.fromDegrees(geoPoint.latitude, geoPoint.longitude);
   const cell = S2Cell.fromLatLng(latLng);
   const cellId = cell.id;
-  return cellId.id as Long;
+  return cellId.id;
 };
 
 export const generateHashKey = (geohash: Long, hashKeyLength: number): Long => {
