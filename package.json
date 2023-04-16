@@ -1,6 +1,6 @@
 {
   "name": "dynamo-locx",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Simple geospatial querying for Amazon DynamoDB",
   "scripts": {
     "prepublish": "npm run build",
@@ -42,7 +42,7 @@
     "geolocation"
   ],
   "dependencies": {
-    "long": "^5.0.1",
+    "long": "^5.2.3",
     "nodes2ts": "^2.0.0"
   },
   "devDependencies": {
